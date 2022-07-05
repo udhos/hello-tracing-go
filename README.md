@@ -2,6 +2,8 @@
 
 ## fib
 
+Trace output: traces.txt
+
 https://opentelemetry.io/docs/instrumentation/go/getting-started/
 
 ```
@@ -10,3 +12,12 @@ Run
 └── Write
     └── Fibonacci
 ```
+
+## web1
+
+Trace output: traces.txt
+
+https://opentelemetry.io/docs/instrumentation/go/libraries/
+
+curl localhost:3030/hello-instrumented
+
