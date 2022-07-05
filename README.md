@@ -36,3 +36,5 @@ curl localhost:3003/hello-instrumented
 # References
 
 [Traces](https://opentelemetry.io/docs/concepts/signals/traces/)
+
+[Export to Jaeger](https://github.com/open-telemetry/opentelemetry-go/blob/main/example/jaeger/main.go)
