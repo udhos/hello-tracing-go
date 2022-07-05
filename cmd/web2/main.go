@@ -4,10 +4,10 @@ import (
 	"context"
 	"fmt"
 	"io"
+	"io/ioutil"
 	"log"
 	"net/http"
 	"os"
-	"time"
 
 	"github.com/udhos/hello-tracing-go/traceutil"
 	"go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp"
@@ -26,26 +26,47 @@ import (
 // Package-level tracer.
 // This should be configured in your code setup instead of here.
 //var tracer = otel.Tracer("github.com/full/path/to/mypkg")
-var tracer = otel.Tracer("github.com/udhos/hello-tracing-go/cmd/web1")
+var tracer = otel.Tracer("github.com/udhos/hello-tracing-go/cmd/web2")
 
 // sleepy mocks work that your application does.
-func sleepy(ctx context.Context) string {
-	_, span := tracer.Start(ctx, "sleep")
-	defer span.End()
+func forward(ctx context.Context, w http.ResponseWriter, r *http.Request) {
+	const location = "http://localhost:3001/hello-instrumented"
 
-	sleepTime := 1 * time.Second
-	time.Sleep(sleepTime)
-	span.SetAttributes(attribute.Int("sleep.duration", int(sleepTime)))
+	client := http.Client{Transport: otelhttp.NewTransport(http.DefaultTransport)}
 
-	return fmt.Sprintf("web1: Hello, World! I am instrumented automatically! traceID=%s", span.SpanContext().TraceID())
+	/*
+		ctx, span := tracer.Start(ctx, "forward2")
+		span.SetAttributes(semconv.PeerServiceKey.String("ExampleService"))
+		defer span.End()
+	*/
+
+	req, err := http.NewRequestWithContext(ctx, "GET", location, nil)
+	if err != nil {
+		panic(err)
+	}
+
+	res, err := client.Do(req)
+	if err != nil {
+		panic(err)
+	}
+
+	body, err := ioutil.ReadAll(res.Body)
+	b := string(body)
+	fmt.Printf("err:%v body:%s\n", err, b)
+	res.Body.Close()
+
+	fmt.Fprint(w, b)
 }
 
 // httpHandler is an HTTP handler function that is going to be instrumented.
 func httpHandler(w http.ResponseWriter, r *http.Request) {
+	//fmt.Fprintf(w, "Hello, World! I am instrumented automatically!")
 	ctx := r.Context()
-	result := sleepy(ctx)
-	fmt.Fprintf(w, result)
 
+	newCtx, span := tracer.Start(ctx, "forward")
+	defer span.End()
+
+	forward(newCtx, w, r)
 }
 
 func main() {
@@ -53,7 +74,7 @@ func main() {
 
 	{
 		// Write telemetry data to a file.
-		f, err := os.Create("traces-web1.txt")
+		f, err := os.Create("traces-web2.txt")
 		if err != nil {
 			l.Fatal(err)
 		}
@@ -96,7 +117,7 @@ func main() {
 	http.Handle("/hello-instrumented", wrappedHandler)
 
 	// And start the HTTP serve.
-	addr := ":3001"
+	addr := ":3002"
 	l.Printf("listening on %s", addr)
 	log.Fatal(http.ListenAndServe(addr, nil))
 }
@@ -118,7 +139,7 @@ func newResource() *resource.Resource {
 		resource.Default(),
 		resource.NewWithAttributes(
 			semconv.SchemaURL,
-			semconv.ServiceNameKey.String("service-name-web1"),
+			semconv.ServiceNameKey.String("service-name-web2"),
 			semconv.ServiceVersionKey.String("v0.1.0"),
 			attribute.String("environment", "demo"),
 		),

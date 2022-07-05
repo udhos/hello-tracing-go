@@ -22,7 +22,7 @@ func main() {
 
 	{
 		// Write telemetry data to a file.
-		f, err := os.Create("traces.txt")
+		f, err := os.Create("traces-fib.txt")
 		if err != nil {
 			l.Fatal(err)
 		}
@@ -86,7 +86,7 @@ func newResource() *resource.Resource {
 		resource.Default(),
 		resource.NewWithAttributes(
 			semconv.SchemaURL,
-			semconv.ServiceNameKey.String("fib"),
+			semconv.ServiceNameKey.String("service-name-fib"),
 			semconv.ServiceVersionKey.String("v0.1.0"),
 			attribute.String("environment", "demo"),
 		),
