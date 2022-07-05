@@ -21,3 +21,6 @@ https://opentelemetry.io/docs/instrumentation/go/libraries/
 
 curl localhost:3030/hello-instrumented
 
+# References
+
+[Traces](https://opentelemetry.io/docs/concepts/signals/traces/)
