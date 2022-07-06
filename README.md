@@ -1,5 +1,23 @@
 # hello-tracing-go
 
+# Open Telemetry tracing with Gin
+
+See https://github.com/udhos/kubecloudconfigserver/blob/main/cmd/kubeconfigserver/tracing.go
+
+1) Initialize the tracing (see main.go)
+
+2) Enable trace propagation (see tracePropagation below)
+
+3) Use handler middleware (see main.go)
+   import "go.opentelemetry.io/contrib/instrumentation/github.com/gin-gonic/gin/otelgin"
+   router.Use(otelgin.Middleware("virtual-service"))
+
+4) For http client, create a Request from Context (see backend.go)
+   newCtx, span := b.tracer.Start(ctx, "backendHTTP.fetch")
+   req, errReq := http.NewRequestWithContext(newCtx, "GET", u, nil)
+   client := http.Client{Transport: otelhttp.NewTransport(http.DefaultTransport)}
+   resp, errGet := client.Do(req)
+
 ## fib
 
 Trace output: traces-fib.txt
